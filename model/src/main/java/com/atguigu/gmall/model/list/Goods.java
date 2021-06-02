@@ -10,7 +10,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 import java.util.Date;
 import java.util.List;
 
-// Index = goods , Type = info  es 7.8.0 逐渐淡化type！
+// Index = goods , Type = info  es 7.8.0 逐渐淡化type！  修改！
 @Data
 @Document(indexName = "goods" , shards = 3,replicas = 2)
 public class Goods {
