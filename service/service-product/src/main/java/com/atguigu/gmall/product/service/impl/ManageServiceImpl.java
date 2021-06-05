@@ -4,11 +4,12 @@ import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.*;
 import com.atguigu.gmall.product.service.ManageService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -33,6 +34,8 @@ public class ManageServiceImpl implements ManageService {
     @Autowired
     private BaseAttrValueMapper baseAttrValueMapper;
 
+    @Autowired
+    private SpuInfoMapper spuInfoMapper;
 
     @Override
     public List<BaseCategory1> getBaseCategory1() {
@@ -102,5 +105,39 @@ public class ManageServiceImpl implements ManageService {
         return baseAttrValueList;
     }
 
+    @Override
+    public BaseAttrInfo getBaseAttrInfo(Long attrId) {
+        //  根据主键查询平台属性对象
+        //  select * from base_attr_info where id = attrId;
+        BaseAttrInfo baseAttrInfo = baseAttrInfoMapper.selectById(attrId);
+        //  判断平台属性是否为空
+        if (baseAttrInfo!=null){
+            //  select * from base_attr_value where attr_id = ?
+            baseAttrInfo.setAttrValueList(getAttrValueList(attrId));
+        }
+        //  返回平台属性对象
+        return baseAttrInfo;
+    }
 
+    @Override
+    public IPage<SpuInfo> getPage(Page<SpuInfo> page, Long category3Id) {
+        //  封装条件
+        QueryWrapper<SpuInfo> spuInfoQueryWrapper = new QueryWrapper<>();
+        spuInfoQueryWrapper.eq("category3_id",category3Id);
+        spuInfoQueryWrapper.orderByDesc("id");
+        //  需要两个参数，一个是page 当前页，每页显示的条数，第二个Wrapper 条件
+        Page<SpuInfo> spuInfoPage = spuInfoMapper.selectPage(page, spuInfoQueryWrapper);
+        return spuInfoPage;
+    }
+
+    @Override
+    public IPage<SpuInfo> getPages(Page<SpuInfo> page,SpuInfo spuInfo) {
+        //  封装条件
+        QueryWrapper<SpuInfo> spuInfoQueryWrapper = new QueryWrapper<>();
+        spuInfoQueryWrapper.eq("category3_id",spuInfo.getCategory3Id());
+        spuInfoQueryWrapper.orderByDesc("id");
+        //  需要两个参数，一个是page 当前页，每页显示的条数，第二个Wrapper 条件
+        Page<SpuInfo> spuInfoPage = spuInfoMapper.selectPage(page, spuInfoQueryWrapper);
+        return spuInfoPage;
+    }
 }

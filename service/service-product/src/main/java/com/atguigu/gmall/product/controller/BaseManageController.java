@@ -2,7 +2,6 @@ package com.atguigu.gmall.product.controller;
 
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.model.product.BaseAttrInfo;
-import com.atguigu.gmall.model.product.BaseAttrValue;
 import com.atguigu.gmall.model.product.BaseCategory1;
 import com.atguigu.gmall.product.service.ManageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +49,6 @@ public class BaseManageController {
     //  根据分类Id 获取平台属性集合
     //  http://api.gmall.com/admin/product/attrInfoList/{category1Id}/{category2Id}/{category3Id}
     @GetMapping("attrInfoList/{category1Id}/{category2Id}/{category3Id}")
-
     public Result getAttrInfoList(@PathVariable Long category1Id,
                                   @PathVariable Long category2Id,
                                   @PathVariable Long category3Id){
@@ -62,7 +60,7 @@ public class BaseManageController {
 
     }
 
-    //  保存平台属性控制器
+    //  保存平台属性控制器 http://localhost/admin/product/saveAttrInfo
     //  http://api.gmall.com/admin/product/saveAttrInfo
     //  前端传递的参数转换成哪个实体类?
     //  1.  可以自定义class 实体类！ 2.  如果实体类中有类似的Json 数据结构，那么我们就可以直接使用！
@@ -78,11 +76,20 @@ public class BaseManageController {
 
     //  根据平台属性Id 获取到平台属性值集合
     //  http://api.gmall.com/admin/product/getAttrValueList/{attrId}
+    @GetMapping("getAttrValueList/{attrId}")
     public Result getAttrValueList(@PathVariable Long attrId){
         //  调用服务层方法
-        List<BaseAttrValue> baseAttrValueList = manageService.getAttrValueList(attrId);
-        //  返回数据
-        return Result.ok(baseAttrValueList);
+        //  从业务角度出发：回显的是平台属性值集合， 平台属性：属性值  1 ：n ，也就说只有1，才能有多！
+        //  必须有平台属性，那么才能可以查询到平台属性值！
+        //  select * from base_attr_info where id = attrId;   baseAttrInfo;
+        //  if（baseAttrInfo != null） 获取到平台属性值集合   return baseAttrInfo.getAttrValueList();
+        BaseAttrInfo baseAttrInfo = manageService.getBaseAttrInfo(attrId);
+
+        //        List<BaseAttrValue> baseAttrValueList = manageService.getAttrValueList(attrId);
+        //        //  返回数据
+        //        return Result.ok(baseAttrValueList);
+
+        return  Result.ok(baseAttrInfo.getAttrValueList());
     }
 
 
