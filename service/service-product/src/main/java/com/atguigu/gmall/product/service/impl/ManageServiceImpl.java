@@ -37,6 +37,32 @@ public class ManageServiceImpl implements ManageService {
     @Autowired
     private SpuInfoMapper spuInfoMapper;
 
+    @Autowired
+    private BaseSaleAttrMapper baseSaleAttrMapper;
+
+    @Autowired
+    private SpuImageMapper spuImageMapper;
+
+    @Autowired
+    private SpuSaleAttrMapper spuSaleAttrMapper;
+
+    @Autowired
+    private SpuSaleAttrValueMapper spuSaleAttrValueMapper;
+
+    @Autowired
+    private SkuInfoMapper skuInfoMapper;
+
+    @Autowired
+    private SkuImageMapper skuImageMapper;
+
+    @Autowired
+    private SkuSaleAttrValueMapper skuSaleAttrValueMapper;
+
+    @Autowired
+    private SkuAttrValueMapper skuAttrValueMapper;
+
+
+
     @Override
     public List<BaseCategory1> getBaseCategory1() {
         //  select * from base_category1
@@ -139,5 +165,126 @@ public class ManageServiceImpl implements ManageService {
         //  需要两个参数，一个是page 当前页，每页显示的条数，第二个Wrapper 条件
         Page<SpuInfo> spuInfoPage = spuInfoMapper.selectPage(page, spuInfoQueryWrapper);
         return spuInfoPage;
+    }
+
+    @Override
+    public List<BaseSaleAttr> getBseSaleAttrList() {
+        //  select * from base_sale_attr
+        List<BaseSaleAttr> baseSaleAttrList = baseSaleAttrMapper.selectList(null);
+
+        return baseSaleAttrList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveSpuInfo(SpuInfo spuInfo) {
+        /*
+            spuInfo;
+            spuImage;
+            spuSaleAttr;
+            spuSaleAttrValue;
+         */
+        spuInfoMapper.insert(spuInfo);
+
+        //  获取到spuImage 集合数据
+        List<SpuImage> spuImageList = spuInfo.getSpuImageList();
+        //  判断不为空
+        if (!CollectionUtils.isEmpty(spuImageList)){
+            //  循环遍历
+            for (SpuImage spuImage : spuImageList) {
+                //  需要将spuId 赋值
+                spuImage.setSpuId(spuInfo.getId());
+                //  保存spuImge
+                spuImageMapper.insert(spuImage);
+            }
+        }
+        //  获取销售属性集合
+        List<SpuSaleAttr> spuSaleAttrList = spuInfo.getSpuSaleAttrList();
+        //  判断
+        if (!CollectionUtils.isEmpty(spuSaleAttrList)){
+            //  循环遍历
+            for (SpuSaleAttr spuSaleAttr : spuSaleAttrList) {
+                //  需要将spuId 赋值
+                spuSaleAttr.setSpuId(spuInfo.getId());
+                spuSaleAttrMapper.insert(spuSaleAttr);
+
+                //  再此获取销售属性值集合
+                List<SpuSaleAttrValue> spuSaleAttrValueList = spuSaleAttr.getSpuSaleAttrValueList();
+                //  判断
+                if (!CollectionUtils.isEmpty(spuSaleAttrValueList)){
+                    //  循环遍历
+                    for (SpuSaleAttrValue spuSaleAttrValue : spuSaleAttrValueList) {
+                        //   需要将spuId， sale_attr_name 赋值
+                        spuSaleAttrValue.setSpuId(spuInfo.getId());
+                        spuSaleAttrValue.setSaleAttrName(spuSaleAttr.getSaleAttrName());
+                        spuSaleAttrValueMapper.insert(spuSaleAttrValue);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<SpuImage> getSpuImageList(Long spuId) {
+        //  select * from spu_image where spu_id = ?
+        QueryWrapper<SpuImage> spuImageQueryWrapper = new QueryWrapper<>();
+        spuImageQueryWrapper.eq("spu_id",spuId);
+        return spuImageMapper.selectList(spuImageQueryWrapper);
+
+    }
+
+    @Override
+    public List<SpuSaleAttr> getSpuSaleAttrList(Long spuId) {
+        //  不仅需要获取到销售属性名，还需要获取到销售属性值名称！ spu_sale_attr ， spu_sale_attr_value
+        List<SpuSaleAttr>  spuSaleAttrList = spuSaleAttrMapper.selectSpuSaleAttrList(spuId);
+        return spuSaleAttrList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveSkuInfo(SkuInfo skuInfo) {
+        /*
+        skuInfo
+        skuAttrValue
+        skuSaleAttrValue
+        skuImage
+         */
+        //  保存skuInfo
+        skuInfoMapper.insert(skuInfo);
+        //  skuAttrValue
+        //  获取数据
+        List<SkuAttrValue> skuAttrValueList = skuInfo.getSkuAttrValueList();
+        //  判断
+        if (!CollectionUtils.isEmpty(skuAttrValueList)){
+            //  循环遍历
+            for (SkuAttrValue skuAttrValue : skuAttrValueList) {
+                //  给skuId 赋值
+                skuAttrValue.setSkuId(skuInfo.getId());
+                skuAttrValueMapper.insert(skuAttrValue);
+            }
+        }
+
+        //  先获取到对应的数据
+        List<SkuSaleAttrValue> skuSaleAttrValueList = skuInfo.getSkuSaleAttrValueList();
+        if (!CollectionUtils.isEmpty(skuSaleAttrValueList)){
+            //  循环遍历
+            for (SkuSaleAttrValue skuSaleAttrValue : skuSaleAttrValueList) {
+                //  sku_id
+                skuSaleAttrValue.setSkuId(skuInfo.getId());
+                //  spu_id
+                skuSaleAttrValue.setSpuId(skuInfo.getSpuId());
+                skuSaleAttrValueMapper.insert(skuSaleAttrValue);
+            }
+        }
+        //   skuImage
+        List<SkuImage> skuImageList = skuInfo.getSkuImageList();
+        if (!CollectionUtils.isEmpty(skuImageList)){
+            //  循环遍历
+            for (SkuImage skuImage : skuImageList) {
+                //  sku_id
+                skuImage.setSkuId(skuInfo.getId());
+                skuImageMapper.insert(skuImage);
+            }
+        }
     }
 }

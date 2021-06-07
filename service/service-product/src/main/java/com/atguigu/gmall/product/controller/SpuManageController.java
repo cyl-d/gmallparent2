@@ -1,15 +1,17 @@
 package com.atguigu.gmall.product.controller;
 
 import com.atguigu.gmall.common.result.Result;
+import com.atguigu.gmall.model.product.BaseSaleAttr;
+import com.atguigu.gmall.model.product.SpuImage;
 import com.atguigu.gmall.model.product.SpuInfo;
+import com.atguigu.gmall.model.product.SpuSaleAttr;
 import com.atguigu.gmall.product.service.ManageService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author atguigu-mqx
@@ -37,5 +39,44 @@ public class SpuManageController {
         IPage<SpuInfo> pages = manageService.getPages(spuInfoPage, spuInfo);
         //  设置返回数据
         return Result.ok(pages);
+    }
+
+    //  获取销售属性数据
+    //  http://api.gmall.com/admin/product/baseSaleAttrList
+    @GetMapping("baseSaleAttrList")
+    public Result getBseSaleAttrList(){
+        //  调用服务层方法
+        List<BaseSaleAttr> baseSaleAttrList = manageService.getBseSaleAttrList();
+        return Result.ok(baseSaleAttrList);
+    }
+
+    //  http://localhost/admin/product/saveSpuInfo
+    //  接收传递的参数
+    //  spuInfo 保存
+    @PostMapping("/saveSpuInfo")
+    public Result saveSpuInfo(@RequestBody SpuInfo spuInfo) {
+
+        //  调用服务层方法
+        manageService.saveSpuInfo(spuInfo);
+        return Result.ok();
+    }
+
+    //  根据spuId 获取spuImage 集合
+    //  http://localhost/admin/product/spuImageList/27
+    //  http://api.gmall.com/admin/product/spuImageList/{spuId}
+    @GetMapping("spuImageList/{spuId}")
+    public Result getSpuImageList(@PathVariable Long spuId){
+        //  需要调用服务层方法
+        List<SpuImage> spuImageList = manageService.getSpuImageList(spuId);
+        return Result.ok(spuImageList);
+    }
+
+    //  根据spuId 查询销售属性{ 销售属性值}
+    //  http://api.gmall.com/admin/product/spuSaleAttrList/{spuId}
+    @GetMapping("spuSaleAttrList/{spuId}")
+    public Result getSpuSaleAttrList(@PathVariable Long spuId){
+        //  调用服务层方法
+        List<SpuSaleAttr> spuSaleAttrList = manageService.getSpuSaleAttrList(spuId);
+        return Result.ok(spuSaleAttrList);
     }
 }
