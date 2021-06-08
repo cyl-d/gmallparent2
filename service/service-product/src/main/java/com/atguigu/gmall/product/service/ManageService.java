@@ -4,6 +4,7 @@ import com.atguigu.gmall.model.product.*;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -105,4 +106,52 @@ public interface ManageService {
      * @param skuInfo
      */
     void saveSkuInfo(SkuInfo skuInfo);
+
+    /**
+     * 查询带分页功能的skuInfo 列表
+     * @param skuInfoPage
+     * @return
+     */
+    IPage<SkuInfo> getSkuInfoList(Page<SkuInfo> skuInfoPage);
+
+    /**
+     * 商品的上架功能
+     * @param skuId
+     */
+    void onSale(Long skuId);
+
+    /**
+     * 商品的下架功能
+     * @param skuId
+     */
+    void cancelSale(Long skuId);
+
+    /**
+     * 根据skuId 获取skuInfo 对象数据
+     * @param skuId
+     * @return
+     */
+    SkuInfo getSkuInfo(Long skuId);
+
+    /**
+     * 根据三级分类Id 获取分类数据
+     * @param category3Id
+     * @return
+     */
+    BaseCategoryView getBaseCategoryView(Long category3Id);
+
+    /**
+     * 根据spuId,skuId 获取销售属性数据并锁定销售属性值！
+     * @param skuId
+     * @param spuId
+     * @return
+     */
+    List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(Long skuId, Long spuId);
+
+    /**
+     * 根据skuId 获取到最新价格数据
+     * @param skuId
+     * @return
+     */
+    BigDecimal getSkuPrice(Long skuId);
 }

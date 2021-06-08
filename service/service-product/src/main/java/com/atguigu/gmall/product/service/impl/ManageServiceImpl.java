@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -60,6 +61,9 @@ public class ManageServiceImpl implements ManageService {
 
     @Autowired
     private SkuAttrValueMapper skuAttrValueMapper;
+
+    @Autowired
+    private BaseCategoryViewMapper baseCategoryViewMapper;
 
 
 
@@ -285,6 +289,96 @@ public class ManageServiceImpl implements ManageService {
                 skuImage.setSkuId(skuInfo.getId());
                 skuImageMapper.insert(skuImage);
             }
+        }
+    }
+
+    @Override
+    public IPage<SkuInfo> getSkuInfoList(Page<SkuInfo> skuInfoPage) {
+        //  查询的时候按照id 进行降序排列
+        QueryWrapper<SkuInfo> skuInfoQueryWrapper = new QueryWrapper<>();
+        skuInfoQueryWrapper.orderByDesc("id");
+        return skuInfoMapper.selectPage(skuInfoPage,skuInfoQueryWrapper);
+    }
+
+    @Override
+    public void onSale(Long skuId) {
+        //  本质： is_sale = 1
+        //  update sku_info set is_sale = 1 where id = skuId
+        //  需要的是实体类：实体类中一定得有主键！
+
+        //        SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
+        //        skuInfo.setIsSale(1);
+        //        skuInfoMapper.updateById(skuInfo);
+        SkuInfo skuInfo = new SkuInfo();
+        skuInfo.setId(skuId);
+        skuInfo.setIsSale(1);
+        skuInfoMapper.updateById(skuInfo);
+
+
+    }
+
+    @Override
+    public void cancelSale(Long skuId) {
+        //  本质： is_sale = 0
+        //  update sku_info set is_sale = 0 where id = skuId
+        SkuInfo skuInfo = new SkuInfo();
+        skuInfo.setId(skuId);
+        skuInfo.setIsSale(0);
+        skuInfoMapper.updateById(skuInfo);
+    }
+
+    @Override
+    public SkuInfo getSkuInfo(Long skuId) {
+        //  select * from sku_info where id = skuId;
+        SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
+
+        //  可以将skuImageList 查询出来放入skuInfo 对象！
+        //  select * from sku_image where sku_id = skuId;
+        List<SkuImage> skuImageList = skuImageMapper.selectList(new QueryWrapper<SkuImage>().eq("sku_id", skuId));
+
+        //  给当前的skuInfo 属性赋值
+        skuInfo.setSkuImageList(skuImageList);
+        //  返回数据
+        return skuInfo;
+    }
+
+
+    @Override
+    public BaseCategoryView getBaseCategoryView(Long category3Id) {
+        //  select * from base_category_view where id = 61;
+        return baseCategoryViewMapper.selectById(category3Id);
+    }
+
+    @Override
+    public List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(Long skuId, Long spuId) {
+        //  调用mapper 的方法
+        /*
+        select
+            ssa.id,
+            ssa.spu_id,
+            ssa.base_sale_attr_id,
+            ssa.sale_attr_name,
+            ssav.id sale_attr_value_id,
+            ssav.sale_attr_value_name,
+            if(sav.sku_id is null,0,1) is_checked #
+        from spu_sale_attr ssa inner join spu_sale_attr_value  ssav
+            on  ssa.spu_id = ssav.spu_id and ssa.base_sale_attr_id = ssav.base_sale_attr_id
+            left join sku_sale_attr_value sav on sav.sale_attr_value_id = ssav.id and sku_id = 44
+        where ssa.spu_id = 27
+        order by ssa.base_sale_attr_id,ssav.id;
+         */
+        return spuSaleAttrMapper.selectSpuSaleAttrListCheckBySku(skuId,spuId);
+    }
+
+    @Override
+    public BigDecimal getSkuPrice(Long skuId) {
+        //  select price from sku_info where id = skuId;
+        SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
+        //  select * from sku_info where id = skuId;
+        if (skuInfo!=null){
+            return skuInfo.getPrice();
+        }else {
+            return new BigDecimal(0);
         }
     }
 }
