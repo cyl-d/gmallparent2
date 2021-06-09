@@ -12,7 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author atguigu-mqx
@@ -380,5 +382,32 @@ public class ManageServiceImpl implements ManageService {
         }else {
             return new BigDecimal(0);
         }
+    }
+
+    @Override
+    public Map getSkuValueIdsMap(Long spuId) {
+        Map<Object,Object> hashMap = new HashMap<>();
+        /*
+            第一种方式：
+            public class Param{
+                private Long skuId;
+                private String valueIds;
+            }
+            List<Param> paramList = mapper.selectxxx(spuId);
+            第二种方式：
+                直接定义成Map 集合
+                map.put(key,value);
+
+            List<Map> mapList =  mapper.selectxxx(spuId);
+         */
+        //  使用哪个mapper 去执行?
+        List<Map> mapList = skuSaleAttrValueMapper.selectSaleAttrValuesBySpu(spuId);
+        for (Map map : mapList) {
+            //  hashMap 转换成 {"115|117":"44","114|117":"45"}
+            //  key = 115|117  value = 44
+            hashMap.put(map.get("value_ids"),map.get("sku_id"));
+        }
+        //  返回数据
+        return hashMap;
     }
 }

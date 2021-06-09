@@ -73,7 +73,6 @@ public class FileUplodController {
             String extName = FilenameUtils.getExtension(file.getOriginalFilename());    //png
             //  1623051196858d86543a89170472384e5f3a5e781ba84.png
             String fileName = System.currentTimeMillis()+ UUID.randomUUID().toString().replace("-","")+"."+extName;
-
             // 使用putObject上传一个文件到存储桶中。
             //  minioClient.putObject("asiatrip","asiaphotos.zip", "/home/user/Photos/asiaphotos.zip");
             minioClient.putObject(
@@ -91,6 +90,7 @@ public class FileUplodController {
                                     .object(fileName)
                                     .build());
             System.out.println(url);
+
         } catch(MinioException e) {
             System.out.println("Error occurred: " + e);
         }

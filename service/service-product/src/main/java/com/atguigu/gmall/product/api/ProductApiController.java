@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author atguigu-mqx
@@ -48,5 +49,11 @@ public class ProductApiController {
     @GetMapping("inner/getSkuPrice/{skuId}")
     public BigDecimal getSkuPrice(@PathVariable Long skuId){
         return manageService.getSkuPrice(skuId);
+    }
+
+    //  根据spuId 获取到销售属性值Id 与skuId 组成的数据集
+    @GetMapping("inner/getSkuValueIdsMap/{spuId}")
+    public Map getSkuValueIdsMap(@PathVariable Long spuId){
+        return manageService.getSkuValueIdsMap(spuId);
     }
 }

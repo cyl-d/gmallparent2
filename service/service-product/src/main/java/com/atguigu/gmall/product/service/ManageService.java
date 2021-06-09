@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author atguigu-mqx
@@ -154,4 +155,11 @@ public interface ManageService {
      * @return
      */
     BigDecimal getSkuPrice(Long skuId);
+
+    /**
+     * 根据spuId 获取销售属性值与skuId 组成的map 集合！
+     * @param spuId
+     * @return
+     */
+    Map getSkuValueIdsMap(Long spuId);
 }
