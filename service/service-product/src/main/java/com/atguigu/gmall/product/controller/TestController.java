@@ -27,4 +27,24 @@ public class TestController {
         return Result.ok();
 
     }
+
+    //  读锁
+    @GetMapping("read")
+    public Result read(){
+        //  调用服务层方法
+        String msg =  testService.readLock();
+        //  返回数据
+        return Result.ok(msg);
+    }
+
+    //  写锁
+    @GetMapping("write")
+    public Result write(){
+        //  调用服务层方法
+        String msg =  testService.writeLock();
+        //  返回数据
+        return Result.ok(msg);
+    }
+
+
 }

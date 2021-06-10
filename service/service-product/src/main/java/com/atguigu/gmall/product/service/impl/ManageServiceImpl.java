@@ -1,20 +1,26 @@
 package com.atguigu.gmall.product.service.impl;
 
+import com.atguigu.gmall.common.cache.GmallCache;
+import com.atguigu.gmall.common.constant.RedisConst;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.*;
 import com.atguigu.gmall.product.service.ManageService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.SneakyThrows;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author atguigu-mqx
@@ -67,6 +73,11 @@ public class ManageServiceImpl implements ManageService {
     @Autowired
     private BaseCategoryViewMapper baseCategoryViewMapper;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private RedissonClient redissonClient;
 
 
     @Override
@@ -329,17 +340,179 @@ public class ManageServiceImpl implements ManageService {
         skuInfoMapper.updateById(skuInfo);
     }
 
+    @SneakyThrows
     @Override
+    @GmallCache(prefix = "skuInfo")
     public SkuInfo getSkuInfo(Long skuId) {
+
+        /*
+        if(true){
+            //  getReids();
+        }else{
+            //  getSkuInfoDB(skuId);
+            //  将结果放入缓存！
+        }
+         */
+        //  return getSkuInfoByRedis(skuId);
+        //  return getSkuInfoByRedisson(skuId);
+        return getSkuInfoDB(skuId);
+    }
+
+    private SkuInfo getSkuInfoByRedisson(Long skuId) {
+        SkuInfo skuInfo = null;
+        try {
+            skuInfo = null;
+            //  skuInfo 数据key 这个key 要保证唯一！
+            //  skuKey = sku:skuId:info
+            String skuKey = RedisConst.SKUKEY_PREFIX+skuId+RedisConst.SKUKEY_SUFFIX;
+            //  通过key 获取缓存中的数据
+            //  set sku:skuId:info skuInfo
+            skuInfo = (SkuInfo) redisTemplate.opsForValue().get(skuKey);
+            //  判断缓存中是否有数据
+            if (skuInfo==null){
+                //  直接调用redisson 的方法就可以了。
+                String lockKey = RedisConst.SKUKEY_PREFIX+skuId+RedisConst.SKULOCK_SUFFIX;
+                RLock lock = redissonClient.getLock(lockKey);
+
+                //  上锁
+                boolean result = lock.tryLock(RedisConst.SKULOCK_EXPIRE_PX1, RedisConst.SKULOCK_EXPIRE_PX2, TimeUnit.SECONDS);
+                //  判断是否获取到锁！
+                if (result){
+                    try {
+                        //  业务逻辑代码
+                        skuInfo = getSkuInfoDB(skuId);
+                        //  判断skuInfo
+                        if (skuInfo==null){
+                            //  创建一个空对象
+                            SkuInfo skuInfo1 = new SkuInfo();
+                            //  放入缓存
+                            redisTemplate.opsForValue().set(skuKey,skuInfo1,RedisConst.SKUKEY_TEMPORARY_TIMEOUT,TimeUnit.SECONDS);
+                            //  返回当前数据
+                            return skuInfo1;
+                        }
+                        //  放入缓存
+                        redisTemplate.opsForValue().set(skuKey,skuInfo,RedisConst.SKUKEY_TIMEOUT,TimeUnit.SECONDS);
+                        //  返回数据
+                        return skuInfo;
+                    }finally {
+                        lock.unlock();
+                    }
+                }else {
+                    //  没有获取到分布式锁！
+                    //  睡一会，自旋
+                    try {
+                        Thread.sleep(500);
+                        return getSkuInfo(skuId);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }else {
+                //  返回缓存的数据！
+                return skuInfo;
+            }
+        } catch (InterruptedException e) {
+            //  记录日志，发送短信通知
+            e.printStackTrace();
+        }
+
+        //  返回数据！
+        return getSkuInfoDB(skuId);
+    }
+
+    /**
+     * 使用redis+lua 脚本做分布式锁！
+     * @param skuId
+     * @return
+     */
+    private SkuInfo getSkuInfoByRedis(Long skuId) {
+        SkuInfo skuInfo = null;
+        try {
+            //  skuInfo 数据key 这个key 要保证唯一！
+            //  skuKey = sku:skuId:info
+            String skuKey = RedisConst.SKUKEY_PREFIX+skuId+RedisConst.SKUKEY_SUFFIX;
+            //  通过key 获取缓存中的数据
+            //  set sku:skuId:info skuInfo
+            skuInfo = (SkuInfo) redisTemplate.opsForValue().get(skuKey);
+
+            //  判断
+            if (skuInfo==null){
+                //  缓存中没有数据，从数据库获取，放入缓存！但是，有可能会造成缓存击穿，穿透！
+                //  skuId = 47 击穿 ,skuId = 147 不能 穿透
+                //  定义一个锁：lockKey = sku:skuId:lock
+                String lockKey = RedisConst.SKUKEY_PREFIX+skuId+RedisConst.SKULOCK_SUFFIX;
+                String uuid = UUID.randomUUID().toString();
+                //  使用命令能否获取到锁！
+                Boolean flag = redisTemplate.opsForValue().setIfAbsent(lockKey, uuid, RedisConst.SKULOCK_EXPIRE_PX1, TimeUnit.SECONDS);
+                //  判断是否获取到锁
+                if (flag){
+                    //  获取到锁：
+                    skuInfo = getSkuInfoDB(skuId);
+                    //  判断skuInfo
+                    if (skuInfo==null){
+                        //  创建一个空对象
+                        SkuInfo skuInfo1 = new SkuInfo();
+                        //  放入缓存
+                        redisTemplate.opsForValue().set(skuKey,skuInfo1,RedisConst.SKUKEY_TEMPORARY_TIMEOUT,TimeUnit.SECONDS);
+                        //  返回当前数据
+                        return skuInfo1;
+                    }
+                    //  放入缓存
+                    redisTemplate.opsForValue().set(skuKey,skuInfo,RedisConst.SKUKEY_TIMEOUT,TimeUnit.SECONDS);
+
+                    //  释放锁！建议使用lua 脚本  可以将删除锁的操作放入finally！
+                    //  第一个参数； RedisScript
+                    DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+                    //  使用lua 脚本：
+                    String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+                    //  放入lua 脚本！
+                    redisScript.setScriptText(script);
+                    //  设置返回的类型
+                    redisScript.setResultType(Long.class);
+                    // 第一个参数； RedisScript 第二个参数应该是key ，第三个参数应该是value！
+                    redisTemplate.execute(redisScript, Arrays.asList(lockKey),uuid);
+
+                    //  返回数据库中的数据
+                    return skuInfo;
+                }else {
+                    //  没有获取到分布式锁！
+                    //  睡一会，自旋
+                    try {
+                        Thread.sleep(500);
+                        return getSkuInfo(skuId);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }else {
+                //  直接返回即可！
+                return skuInfo;
+            }
+        } catch (Exception e) {
+            //  记录日志，当前哪台机器宕机了。。。。。。调用一个发送短信接口！
+            e.printStackTrace();
+        }
+        //  返回数据 ， 暂时可以采用数据库兜底！
+        return getSkuInfoDB(skuId);
+    }
+
+    /**
+     * 抽离方法 通过skuId 获取skuInfo + skuIamgeList
+     * @param skuId
+     * @return
+     */
+    private SkuInfo getSkuInfoDB(Long skuId) {
         //  select * from sku_info where id = skuId;
         SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
 
-        //  可以将skuImageList 查询出来放入skuInfo 对象！
-        //  select * from sku_image where sku_id = skuId;
-        List<SkuImage> skuImageList = skuImageMapper.selectList(new QueryWrapper<SkuImage>().eq("sku_id", skuId));
+        if (skuInfo!=null){
+            //  可以将skuImageList 查询出来放入skuInfo 对象！
+            //  select * from sku_image where sku_id = skuId;
+            List<SkuImage> skuImageList = skuImageMapper.selectList(new QueryWrapper<SkuImage>().eq("sku_id", skuId));
 
-        //  给当前的skuInfo 属性赋值
-        skuInfo.setSkuImageList(skuImageList);
+            //  给当前的skuInfo 属性赋值
+            skuInfo.setSkuImageList(skuImageList);
+        }
         //  返回数据
         return skuInfo;
     }
