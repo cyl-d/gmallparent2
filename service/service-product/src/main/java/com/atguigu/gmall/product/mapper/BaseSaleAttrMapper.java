@@ -7,6 +7,6 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * @author atguigu-mqx
  */
-@Mapper
+
 public interface BaseSaleAttrMapper extends BaseMapper<BaseSaleAttr> {
 }

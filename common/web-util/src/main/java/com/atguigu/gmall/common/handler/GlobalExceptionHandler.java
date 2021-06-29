@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 
+/**
+ * @author cyl
+ */
 @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {

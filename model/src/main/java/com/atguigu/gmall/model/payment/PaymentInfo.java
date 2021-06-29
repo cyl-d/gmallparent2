@@ -5,9 +5,11 @@ package com.atguigu.gmall.model.payment;
 import com.atguigu.gmall.model.base.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -53,10 +55,15 @@ public class PaymentInfo extends BaseEntity {
 	@TableField("payment_status")
 	private String paymentStatus;
 
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	@ApiModelProperty(value = "创建时间")
 	@TableField("create_time")
 	private Date createTime;
 
+
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	@ApiModelProperty(value = "回调时间")
 	@TableField("callback_time")
 	private Date callbackTime;

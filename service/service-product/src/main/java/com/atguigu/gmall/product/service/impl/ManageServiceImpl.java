@@ -2,7 +2,9 @@ package com.atguigu.gmall.product.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.gmall.common.cache.GmallCache;
+import com.atguigu.gmall.common.constant.MqConst;
 import com.atguigu.gmall.common.constant.RedisConst;
+import com.atguigu.gmall.common.service.RabbitService;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.*;
 import com.atguigu.gmall.product.service.ManageService;
@@ -83,6 +85,9 @@ public class ManageServiceImpl implements ManageService {
 
     @Autowired
     private BaseTrademarkMapper baseTrademarkMapper;
+
+    @Autowired
+    private RabbitService rabbitService;
 
     @Override
     public List<BaseCategory1> getBaseCategory1() {
@@ -317,6 +322,7 @@ public class ManageServiceImpl implements ManageService {
         return skuInfoMapper.selectPage(skuInfoPage,skuInfoQueryWrapper);
     }
 
+
     @Override
     public void onSale(Long skuId) {
         //  本质： is_sale = 1
@@ -331,6 +337,8 @@ public class ManageServiceImpl implements ManageService {
         skuInfo.setIsSale(1);
         skuInfoMapper.updateById(skuInfo);
 
+//        向list服务发送一个上架请求
+        rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_GOODS, MqConst.ROUTING_GOODS_UPPER, skuId);
 
     }
 
@@ -342,6 +350,7 @@ public class ManageServiceImpl implements ManageService {
         skuInfo.setId(skuId);
         skuInfo.setIsSale(0);
         skuInfoMapper.updateById(skuInfo);
+        rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_GOODS, MqConst.ROUTING_GOODS_LOWER, skuId);
     }
 
     @SneakyThrows

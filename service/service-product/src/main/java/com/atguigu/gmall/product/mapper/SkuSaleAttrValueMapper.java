@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * @author atguigu-mqx
  */
-@Mapper
+
 public interface SkuSaleAttrValueMapper extends BaseMapper<SkuSaleAttrValue> {
     /**
      * 根据spuId 获取到销售属性值Id 与skuId 组成的集合数据！

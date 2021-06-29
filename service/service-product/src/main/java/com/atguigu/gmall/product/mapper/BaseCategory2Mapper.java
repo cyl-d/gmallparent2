@@ -6,8 +6,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * @author atguigu-mqx
+ * @author cyl
  */
-@Mapper
+
 public interface BaseCategory2Mapper extends BaseMapper<BaseCategory2> {
 }

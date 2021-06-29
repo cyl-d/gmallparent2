@@ -67,6 +67,7 @@ public class CartServiceImpl implements CartService {
             cartInfo = new CartInfo();
             SkuInfo skuInfo = productFeignClient.getSkuInfo(Long.parseLong(skuId));
             cartInfo.setCartPrice(productFeignClient.getSkuPrice(Long.parseLong(skuId)));
+            cartInfo.setSkuPrice(productFeignClient.getSkuPrice(Long.parseLong(skuId)));
             cartInfo.setIsChecked(1);
             cartInfo.setCreateTime(new Timestamp(System.currentTimeMillis()));
             cartInfo.setUpdateTime(new Timestamp(System.currentTimeMillis()));
@@ -86,7 +87,8 @@ public class CartServiceImpl implements CartService {
      * 加载数据库 存入redis 中
      * @param userId
      */
-    private List<CartInfo> loadCartCache(String userId) {
+    @Override
+    public List<CartInfo> loadCartCache(String userId) {
         List<CartInfo> cartInfos = cartInfoMapper.selectList(
                 new QueryWrapper<CartInfo>().eq("user_id", userId).orderByDesc("update_time"));
         if (CollectionUtils.isEmpty(cartInfos)) {
@@ -119,6 +121,24 @@ public class CartServiceImpl implements CartService {
      */
     private String getCartKey(String userId) {
         return RedisConst.USER_KEY_PREFIX + userId + RedisConst.USER_CART_KEY_SUFFIX;
+    }
+
+    /**
+     * 获取当前用户id 下所选中的购物车列表
+     *
+     * @param userId
+     * @return
+     */
+    @Override
+    public List<CartInfo> getCartCheckedList(Long userId) {
+//        获取所有购物车信息
+        String cartKey = getCartKey(userId.toString());
+        List<CartInfo> cartInfos = redisTemplate.opsForHash().values(cartKey);
+        if (CollectionUtils.isEmpty(cartInfos)) {
+            cartInfos = cartInfoMapper.selectList(new QueryWrapper<CartInfo>().eq("user_id", userId));
+        }
+        cartInfos = cartInfos.stream().filter(cartInfo -> cartInfo.getIsChecked() == 1).collect(Collectors.toList());
+        return cartInfos;
     }
 
     /**

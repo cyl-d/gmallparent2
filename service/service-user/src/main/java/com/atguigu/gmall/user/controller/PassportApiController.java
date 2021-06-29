@@ -6,12 +6,11 @@ import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.common.util.IpUtil;
 import com.atguigu.gmall.model.user.UserInfo;
 import com.atguigu.gmall.user.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
@@ -19,8 +18,9 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author atguigu-mqx
+ * @author cyl
  */
+@Api(tags = "登录模块实现")
 @RestController
 @RequestMapping("/api/user/passport")
 public class PassportApiController {
@@ -32,7 +32,7 @@ public class PassportApiController {
     private RedisTemplate redisTemplate;
 
 
-    //  有个登录方法
+    @ApiOperation("登录方法")
     @PostMapping("login")
     public Result login(@RequestBody UserInfo userInfo, HttpServletRequest request){
 
@@ -64,7 +64,12 @@ public class PassportApiController {
             //  没有登录成功提示信息！
             return Result.fail().message("用户名或密码不正确!");
         }
-
-
     }
+
+    @GetMapping("logout")
+    public Result logout(HttpServletRequest request) {
+        redisTemplate.delete(RedisConst.USER_LOGIN_KEY_PREFIX + request.getHeader("token"));
+        return Result.ok();
+    }
+
 }

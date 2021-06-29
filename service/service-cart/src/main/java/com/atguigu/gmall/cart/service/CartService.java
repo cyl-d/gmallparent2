@@ -41,4 +41,18 @@ public interface CartService {
      * @param userId
      */
     void deleteCart(Long skuId, String userId);
+
+    /**
+     * 获取当前用户id 下所选中的购物车列表
+     * @param userId
+     * @return
+     */
+    List<CartInfo> getCartCheckedList(Long userId);
+
+
+    /**
+     * 重新加载购物车数据
+     * @param userId
+     */
+    List<CartInfo> loadCartCache(String userId);
 }

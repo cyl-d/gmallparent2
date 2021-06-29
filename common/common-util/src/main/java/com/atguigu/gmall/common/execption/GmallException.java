@@ -21,6 +21,7 @@ public class GmallException extends RuntimeException {
      * @param message
      * @param code
      */
+
     public GmallException(String message, Integer code) {
         super(message);
         this.code = code;

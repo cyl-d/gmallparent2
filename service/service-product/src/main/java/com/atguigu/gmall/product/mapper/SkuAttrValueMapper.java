@@ -7,6 +7,6 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * @author atguigu-mqx
  */
-@Mapper
+
 public interface SkuAttrValueMapper extends BaseMapper<SkuAttrValue> {
 }

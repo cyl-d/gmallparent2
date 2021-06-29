@@ -3,16 +3,18 @@ package com.atguigu.gmall.list.controller;
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.list.service.SearchService;
 import com.atguigu.gmall.model.list.Goods;
+import com.atguigu.gmall.model.list.SearchParam;
+import com.atguigu.gmall.model.list.SearchResponseVo;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
- * @author atguigu-mqx
+ * @author cyl
  */
+@Api(tags = "检索页面")
 @RestController
 @RequestMapping("api/list")
 public class ListApiController {
@@ -32,25 +34,33 @@ public class ListApiController {
         return Result.ok();
     }
 
-    //  上架
+    @ApiOperation("上架")
     @GetMapping("inner/upperGoods/{skuId}")
     public Result upperGoods(@PathVariable Long skuId){
         searchService.upperGoods(skuId);
         return Result.ok();
     }
 
-    //  下架
+    @ApiOperation("下架")
     @GetMapping("inner/lowerGoods/{skuId}")
     public Result lowerGoods(@PathVariable Long skuId){
         searchService.lowerGoods(skuId);
         return Result.ok();
     }
 
-    //  商品的热度排名
+    @ApiOperation("商品的热度排名")
     @GetMapping("inner/incrHotScore/{skuId}")
     public Result incrHotScore(@PathVariable Long skuId){
         searchService.incrHotScore(skuId);
         return Result.ok();
+    }
+
+    @ApiOperation("检索数据控制器")
+    @PostMapping
+    public Result getList(@RequestBody SearchParam searchParam){
+        //  调用服务层方法
+        SearchResponseVo responseVo = searchService.search(searchParam);
+        return Result.ok(responseVo);
     }
 
 }

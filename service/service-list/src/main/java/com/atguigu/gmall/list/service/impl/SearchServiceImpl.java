@@ -328,6 +328,7 @@ public class SearchServiceImpl implements SearchService {
         return searchResponseVo;
     }
 
+
     //  生成dsl！必须根据手撕dsl 语句为参考！
     private SearchRequest buildQueryDsl(SearchParam searchParam) {
         //  创建一个SearchSourceBuilder 对象
